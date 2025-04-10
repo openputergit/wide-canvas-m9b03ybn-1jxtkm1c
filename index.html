@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Competitive Exam Preparation</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f0f2f5;
+        }
+        .exam-card {
+            transition: transform 0.3s ease;
+        }
+        .exam-card:hover {
+            transform: translateY(-5px);
+        }
+        .timer {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        @media (max-width: 768px) {
+            .grid-cols-3 {
+                grid-template-columns: repeat(1, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="min-h-screen">
+        <!-- Navigation -->
+        <nav class="bg-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <h1 class="text-xl font-bold text-gray-800">ExamPrep Pro</h1>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button id="profileBtn" class="p-2 rounded-full hover:bg-gray-100">
+                            <i class="bi bi-person-circle text-2xl"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Category Selection -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="exam-card bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">MBBS</h3>
+                    <p class="text-gray-600 mb-4">Physics, Chemistry, Biology, MAT</p>
+                    <button class="start-exam bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" data-exam="mbbs">
+                        Start Practice
+                    </button>
+                </div>
+                <div class="exam-card bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">Paramedical</h3>
+                    <p class="text-gray-600 mb-4">Specialized courses for healthcare</p>
+                    <button class="start-exam bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" data-exam="paramedical">
+                        Start Practice
+                    </button>
+                </div>
+                <div class="exam-card bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">Engineering Council</h3>
+                    <p class="text-gray-600 mb-4">Technical & Engineering subjects</p>
+                    <button class="start-exam bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" data-exam="engineering">
+                        Start Practice
+                    </button>
+                </div>
+            </div>
+
+            <!-- Exam Interface (Hidden by default) -->
+            <div id="examInterface" class="hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold" id="examTitle">Exam Title</h2>
+                        <div class="timer text-blue-600">03:00:00</div>
+                    </div>
+                    <div id="questionContainer" class="mb-6">
+                        <!-- Questions will be inserted here -->
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <button id="prevQuestion" class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">Previous</button>
+                        <div id="questionNumber" class="text-gray-600">Question 1/50</div>
+                        <button id="nextQuestion" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Next</button>
+                    </div>
+                    <button id="submitExam" class="mt-6 w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Submit Exam</button>
+                </div>
+            </div>
+
+            <!-- Results Interface (Hidden by default) -->
+            <div id="resultsInterface" class="hidden bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold mb-6">Exam Results</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-blue-100 p-4 rounded">
+                        <h3 class="font-semibold">Total Score</h3>
+                        <p id="totalScore" class="text-2xl">0/100</p>
+                    </div>
+                    <div class="bg-green-100 p-4 rounded">
+                        <h3 class="font-semibold">Correct Answers</h3>
+                        <p id="correctAnswers" class="text-2xl">0</p>
+                    </div>
+                    <div class="bg-red-100 p-4 rounded">
+                        <h3 class="font-semibold">Wrong Answers</h3>
+                        <p id="wrongAnswers" class="text-2xl">0</p>
+                    </div>
+                </div>
+                <button id="downloadPDF" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    Download PDF Report
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Sample question data
+        const questionBank = {
+            mbbs: [
+                {
+                    question: "What is the unit of force?",
+                    options: ["Joule", "Pascal", "Newton", "Watt"],
+                    correct: 2
+                },
+                // Add more questions...
+            ]
+        };
+
+        let currentExam = null;
+        let currentQuestion = 0;
+        let answers = [];
+        let timeLeft = 180 * 60; // 3 hours in seconds
+
+        // Event Listeners
+        document.querySelectorAll('.start-exam').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const examType = e.target.dataset.exam;
+                startExam(examType);
+            });
+        });
+
+        function startExam(examType) {
+            currentExam = examType;
+            document.querySelector('#examInterface').classList.remove('hidden');
+            document.querySelectorAll('.exam-card').forEach(card => card.classList.add('hidden'));
+            loadQuestion();
+            startTimer();
+        }
+
+        function loadQuestion() {
+            const question = questionBank[currentExam][currentQuestion];
+            const container = document.querySelector('#questionContainer');
+            container.innerHTML = `
+                <p class="text-lg mb-4">${question.question}</p>
+                <div class="space-y-2">
+                    ${question.options.map((option, index) => `
+                        <div class="flex items-center">
+                            <input type="radio" name="answer" value="${index}" id="option${index}" 
+                                ${answers[currentQuestion] === index ? 'checked' : ''}>
+                            <label for="option${index}" class="ml-2">${option}</label>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            document.querySelector('#questionNumber').textContent = `Question ${currentQuestion + 1}/${questionBank[currentExam].length}`;
+        }
+
+        function startTimer() {
+            const timerDisplay = document.querySelector('.timer');
+            const timer = setInterval(() => {
+                timeLeft--;
+                const hours = Math.floor(timeLeft / 3600);
+                const minutes = Math.floor((timeLeft % 3600) / 60);
+                const seconds = timeLeft % 60;
+                timerDisplay.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    submitExam();
+                }
+            }, 1000);
+        }
+
+        document.querySelector('#prevQuestion').addEventListener('click', () => {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                loadQuestion();
+            }
+        });
+
+        document.querySelector('#nextQuestion').addEventListener('click', () => {
+            saveAnswer();
+            if (currentQuestion < questionBank[currentExam].length - 1) {
+                currentQuestion++;
+                loadQuestion();
+            }
+        });
+
+        function saveAnswer() {
+            const selected = document.querySelector('input[name="answer"]:checked');
+            if (selected) {
+                answers[currentQuestion] = parseInt(selected.value);
+            }
+        }
+
+        document.querySelector('#submitExam').addEventListener('click', submitExam);
+
+        function submitExam() {
+            saveAnswer();
+            const results = calculateResults();
+            showResults(results);
+        }
+
+        function calculateResults() {
+            let correct = 0;
+            let wrong = 0;
+            answers.forEach((answer, index) => {
+                if (answer === questionBank[currentExam][index].correct) {
+                    correct++;
+                } else {
+                    wrong++;
+                }
+            });
+            return {
+                correct,
+                wrong,
+                total: correct * 4 - wrong // Assuming +4 for correct, -1 for wrong
+            };
+        }
+
+        function showResults(results) {
+            document.querySelector('#examInterface').classList.add('hidden');
+            document.querySelector('#resultsInterface').classList.remove('hidden');
+            document.querySelector('#totalScore').textContent = `${results.total}/100`;
+            document.querySelector('#correctAnswers').textContent = results.correct;
+            document.querySelector('#wrongAnswers').textContent = results.wrong;
+        }
+
+        document.querySelector('#downloadPDF').addEventListener('click', () => {
+            alert('Downloading PDF Report...');
+            // Implement PDF generation here
+        });
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
